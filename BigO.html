@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Big O Visualizer — Cracking the Code of Algorithms</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #2a3550;
+    --accent: #f97316;
+    --accent2: #38bdf8;
+    --accent3: #a78bfa;
+    --green: #4ade80;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --code-bg: #0d1117;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  header {
+    padding: 48px 0 32px;
+    text-align: center;
+    position: relative;
+  }
+
+  .tag {
+    display: inline-block;
+    background: rgba(249,115,22,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(249,115,22,0.4);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 4px 14px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    line-height: 1.05;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 1.05rem;
+    margin-top: 12px;
+    font-weight: 300;
+  }
+
+  /* O(n) Big Badge */
+  .hero-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(4rem, 10vw, 7rem);
+    font-weight: 700;
+    color: transparent;
+    -webkit-text-stroke: 2px rgba(56,189,248,0.2);
+    position: absolute;
+    top: 10px;
+    right: -20px;
+    pointer-events: none;
+    user-select: none;
+    letter-spacing: -4px;
+  }
+
+  /* NAV TABS */
+  .complexity-nav {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 32px 0 24px;
+  }
+
+  .cn-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cn-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .cn-btn:hover { color: var(--text); border-color: #4a5a80; transform: translateY(-1px); }
+  .cn-btn.active {
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+
+  .cn-btn[data-id="o1"].active { background: linear-gradient(135deg, #059669, #10b981); }
+  .cn-btn[data-id="olog"].active { background: linear-gradient(135deg, #0369a1, #38bdf8); }
+  .cn-btn[data-id="on"].active { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
+  .cn-btn[data-id="onlog"].active { background: linear-gradient(135deg, #d97706, #fbbf24); }
+  .cn-btn[data-id="on2"].active { background: linear-gradient(135deg, #dc2626, #f87171); }
+  .cn-btn[data-id="o2n"].active { background: linear-gradient(135deg, #7f1d1d, #ef4444); }
+
+  /* MAIN GRID */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 720px) { .main-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .card-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .card-body { padding: 20px; }
+
+  /* COMPLEXITY DISPLAY */
+  .complexity-hero {
+    text-align: center;
+    padding: 28px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .complexity-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%;
+    transform: translateX(-50%);
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.15;
+    transition: background 0.4s;
+  }
+
+  .complexity-notation {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(2.5rem, 7vw, 4.5rem);
+    font-weight: 700;
+    transition: color 0.3s;
+    line-height: 1;
+  }
+
+  .complexity-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 8px 0 4px;
+    color: var(--text);
+  }
+
+  .complexity-tagline {
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 300;
+  }
+
+  .complexity-badges {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 16px;
+  }
+
+  .badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+
+  /* CHART */
+  .chart-wrap {
+    position: relative;
+    height: 320px;
+    padding: 16px 0;
+  }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid #2a3550;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .code-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: #161b27;
+    border-bottom: 1px solid #2a3550;
+  }
+
+  .code-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .code-dot.r { background: #f87171; }
+  .code-dot.y { background: #fbbf24; }
+  .code-dot.g { background: #4ade80; }
+  .code-lang {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-left: auto;
+    letter-spacing: 1px;
+  }
+
+  pre {
+    font-family: 'Space Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    padding: 16px 20px;
+    overflow-x: auto;
+    color: #c9d1d9;
+    white-space: pre;
+  }
+
+  /* Syntax highlight classes */
+  .kw { color: #ff7b72; }
+  .fn { color: #79c0ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .num { color: #79c0ff; }
+  .var { color: #e6edf3; }
+  .op { color: #ff7b72; }
+
+  /* MATH SECTION */
+  .math-section {
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 16px;
+    margin-top: 12px;
+  }
+
+  .math-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .math-formula {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--yellow);
+    background: rgba(251,191,36,0.06);
+    border-left: 3px solid var(--yellow);
+    padding: 10px 14px;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: 10px;
+  }
+
+  .math-explain {
+    font-size: 0.875rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .math-explain strong { color: var(--text); }
+
+  /* STEP COUNTER */
+  .step-demo {
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 16px;
+    margin-top: 12px;
+  }
+
+  .step-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--green);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .step-slider {
+    width: 100%;
+    margin-bottom: 12px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .step-result {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+  }
+
+  .step-n { color: var(--accent2); }
+  .step-ops { color: var(--accent); }
+
+  .step-bar-wrap {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+
+  .step-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+  }
+
+  /* EXPLANATION CARDS */
+  .explain-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 720px) { .explain-row { grid-template-columns: 1fr; } }
+
+  .explain-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .explain-card-icon { font-size: 1.5rem; margin-bottom: 8px; }
+  .explain-card-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+  }
+  .explain-card-text { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+
+  /* COMPLEXITY TABLE */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: var(--surface2); }
+  th {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 12px 16px;
+    font-size: 0.875rem;
+    border-bottom: 1px solid rgba(42,53,80,0.5);
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .tbl-notation {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .speed-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+
+  .footer-note {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    padding-bottom: 40px;
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card, .complexity-hero, .explain-row, .table-wrap {
+    animation: fadeInUp 0.5s ease both;
+  }
+
+  /* Color themes per complexity */
+  .theme-o1 .complexity-notation { color: #4ade80; }
+  .theme-o1 .complexity-hero::before { background: #4ade80; }
+  .theme-olog .complexity-notation { color: #38bdf8; }
+  .theme-olog .complexity-hero::before { background: #38bdf8; }
+  .theme-on .complexity-notation { color: #a78bfa; }
+  .theme-on .complexity-hero::before { background: #a78bfa; }
+  .theme-onlog .complexity-notation { color: #fbbf24; }
+  .theme-onlog .complexity-hero::before { background: #fbbf24; }
+  .theme-on2 .complexity-notation { color: #f87171; }
+  .theme-on2 .complexity-hero::before { background: #f87171; }
+  .theme-o2n .complexity-notation { color: #ef4444; }
+  .theme-o2n .complexity-hero::before { background: #ef4444; }
+
+  /* Highlight active table row */
+  tr.active-row td { background: rgba(255,255,255,0.04); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="hero-badge">O(n²)</div>
+    <div class="tag">📚 CS for High Schoolers</div>
+    <h1>Big O Notation<br>Visualizer</h1>
+    <p class="subtitle">Understand how algorithms scale — with Python code, math, and interactive charts</p>
+  </header>
+
+  <!-- NAV -->
+  <nav class="complexity-nav" id="complexityNav">
+    <button class="cn-btn active" data-id="o1">O(1)</button>
+    <button class="cn-btn" data-id="olog">O(log n)</button>
+    <button class="cn-btn" data-id="on">O(n)</button>
+    <button class="cn-btn" data-id="onlog">O(n log n)</button>
+    <button class="cn-btn" data-id="on2">O(n²)</button>
+    <button class="cn-btn" data-id="o2n">O(2ⁿ)</button>
+  </nav>
+
+  <!-- COMPLEXITY HERO -->
+  <div class="complexity-hero" id="complexityHero">
+    <div class="complexity-notation" id="cNotation">O(1)</div>
+    <div class="complexity-name" id="cName">Constant Time</div>
+    <div class="complexity-tagline" id="cTagline">Always takes the same amount of time, no matter how large the input</div>
+    <div class="complexity-badges" id="cBadges"></div>
+  </div>
+
+  <!-- MAIN GRID: Chart + Code -->
+  <div class="main-grid">
+    <!-- Chart Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(56,189,248,0.1)">📈</div>
+        <span class="card-title">Growth Rate Chart</span>
+      </div>
+      <div class="card-body">
+        <div class="chart-wrap">
+          <canvas id="complexityChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Code Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(74,222,128,0.1)">🐍</div>
+        <span class="card-title">Python Example</span>
+      </div>
+      <div class="card-body">
+        <div class="code-block">
+          <div class="code-toolbar">
+            <div class="code-dot r"></div>
+            <div class="code-dot y"></div>
+            <div class="code-dot g"></div>
+            <span class="code-lang">PYTHON 3</span>
+          </div>
+          <pre id="codeDisplay"></pre>
+        </div>
+
+        <!-- Interactive Step Counter -->
+        <div class="step-demo">
+          <div class="step-label">⚡ Operations Calculator</div>
+          <input type="range" class="step-slider" id="nSlider" min="1" max="100" value="10">
+          <div class="step-result">
+            <span class="step-n">n = <span id="nVal">10</span></span>
+            <span class="step-ops">ops ≈ <span id="opsVal">1</span></span>
+          </div>
+          <div class="step-bar-wrap">
+            <div class="step-bar" id="stepBar" style="width:5%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MATH + EXPLANATION -->
+  <div class="main-grid">
+    <!-- Math Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(251,191,36,0.1)">🧮</div>
+        <span class="card-title">The Math Behind It</span>
+      </div>
+      <div class="card-body">
+        <div class="math-section">
+          <div class="math-title">📐 Formula</div>
+          <div class="math-formula" id="mathFormula">f(n) = c</div>
+          <div class="math-explain" id="mathExplain"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Real World Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(167,139,250,0.1)">🌍</div>
+        <span class="card-title">Real World Analogy</span>
+      </div>
+      <div class="card-body" id="analogyBody"></div>
+    </div>
+  </div>
+
+  <!-- THREE EXPLAIN CARDS -->
+  <div class="explain-row" id="explainRow"></div>
+
+  <!-- BIG O TABLE -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Notation</th>
+          <th>Name</th>
+          <th>n=10</th>
+          <th>n=100</th>
+          <th>n=1000</th>
+          <th>Speed</th>
+        </tr>
+      </thead>
+      <tbody id="complexityTable"></tbody>
+    </table>
+  </div>
+
+  <p class="footer-note">💡 Tip: Big O describes the <em>worst case</em> — how bad can it get? Click each complexity above to explore!</p>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const complexities = {
+  o1: {
+    notation: "O(1)",
+    name: "Constant Time",
+    tagline: "Always takes the same amount of time, no matter how large the input",
+    color: "#4ade80",
+    badgeTime: { label: "Time", color: "#4ade80", value: "🟢 Excellent" },
+    badgeSpace: { label: "Space", color: "#4ade80", value: "🟢 Excellent" },
+    formula: "f(n) = c",
+    mathExplain: `
+      <p>The function <strong>f(n) = c</strong> means the number of operations is a <strong>constant c</strong> — it never changes regardless of n.</p>
+      <br>
+      <p>If it takes <strong>2ms</strong> to look up index <strong>[0]</strong> in a list of <strong>10 items</strong>, it still takes <strong>2ms</strong> for a list of <strong>10 million items</strong>. The input size n disappears from the equation!</p>
+      <br>
+      <p>📌 <strong>Key Math:</strong> lim(n→∞) c = c. No matter how big n gets, the answer stays c.</p>
+    `,
+    code: `<span class="cm"># O(1) — Constant Time</span>
+<span class="cm"># Accessing an element by index</span>
+<span class="cm"># is ALWAYS one operation</span>
+
+<span class="kw">def</span> <span class="fn">get_first</span>(my_list):
+    <span class="cm"># No matter if list has 10 or 10 million</span>
+    <span class="cm"># items, this is still just 1 step!</span>
+    <span class="kw">return</span> my_list[<span class="num">0</span>]   <span class="cm"># ← 1 operation</span>
+
+<span class="cm"># Dictionary lookup is also O(1)</span>
+<span class="kw">def</span> <span class="fn">get_grade</span>(grades, student):
+    <span class="kw">return</span> grades[student]   <span class="cm"># ← 1 operation</span>
+
+<span class="cm"># Example usage:</span>
+numbers = [<span class="num">5</span>, <span class="num">12</span>, <span class="num">3</span>, <span class="num">99</span>, <span class="num">7</span>]
+<span class="fn">print</span>(get_first(numbers))   <span class="cm"># → 5  (instant!)</span>`,
+    opsCalc: n => 1,
+    analogy: `
+      <div style="font-size:3rem;text-align:center;margin-bottom:12px">📖</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:8px">Finding a word in a dictionary... with an index</div>
+      <div style="color:var(--muted);font-size:0.875rem;line-height:1.7">
+        Imagine you have a <strong style="color:var(--text)">dictionary with a tab index</strong>. To find "Zebra", you flip directly to "Z" — one move, done!<br><br>
+        It doesn't matter if the dictionary has 100 words or 100,000 words. You still flip to the same tab. That's <strong style="color:#4ade80">O(1)</strong>.
+      </div>
+    `,
+    tips: [
+      { icon: "⚡", title: "Lightning Fast", text: "Array indexing, hash map lookups, math operations — all O(1). The gold standard of performance." },
+      { icon: "🔑", title: "Why Dictionaries Rock", text: "Python dicts use hashing: each key maps to a slot in memory directly. No searching needed!" },
+      { icon: "⚠️", title: "Common Mistake", text: 'People confuse "small code" with "fast code". A single nested loop can be O(n²) even if it\'s 3 lines!' }
+    ]
+  },
+
+  olog: {
+    notation: "O(log n)",
+    name: "Logarithmic Time",
+    tagline: "Each step cuts the problem in half — incredibly efficient for large inputs",
+    color: "#38bdf8",
+    badgeTime: { label: "Time", color: "#38bdf8", value: "🔵 Great" },
+    badgeSpace: { label: "Space", color: "#4ade80", value: "🟢 Excellent" },
+    formula: "f(n) = log₂(n)",
+    mathExplain: `
+      <p><strong>Logarithm</strong>: log₂(n) asks "<strong>how many times can I halve n before reaching 1?</strong>"</p>
+      <br>
+      <p>📊 Examples:</p>
+      <p>• log₂(<strong>8</strong>) = <strong>3</strong> &nbsp;(8→4→2→1, three halvings)</p>
+      <p>• log₂(<strong>1,024</strong>) = <strong>10</strong> &nbsp;(only 10 steps for 1024 items!)</p>
+      <p>• log₂(<strong>1,000,000</strong>) = <strong>~20</strong> &nbsp;(20 steps for a million items!)</p>
+      <br>
+      <p>📌 <strong>Key Insight:</strong> Even if n grows 1000x, the operations only grow by ~10. Incredibly powerful!</p>
+    `,
+    code: `<span class="cm"># O(log n) — Logarithmic Time</span>
+<span class="cm"># Binary Search: halve the search space each step</span>
+
+<span class="kw">def</span> <span class="fn">binary_search</span>(arr, target):
+    left, right = <span class="num">0</span>, <span class="fn">len</span>(arr) - <span class="num">1</span>
+    
+    <span class="kw">while</span> left <= right:          <span class="cm"># log₂(n) iterations</span>
+        mid = (left + right) // <span class="num">2</span>
+        
+        <span class="kw">if</span> arr[mid] == target:
+            <span class="kw">return</span> mid             <span class="cm"># Found it!</span>
+        <span class="kw">elif</span> arr[mid] < target:
+            left = mid + <span class="num">1</span>          <span class="cm"># Search RIGHT half</span>
+        <span class="kw">else</span>:
+            right = mid - <span class="num">1</span>         <span class="cm"># Search LEFT half</span>
+    
+    <span class="kw">return</span> -<span class="num">1</span>   <span class="cm"># Not found</span>
+
+<span class="cm"># For 1,000,000 items → only ~20 comparisons!</span>
+nums = [<span class="num">1</span>, <span class="num">3</span>, <span class="num">5</span>, <span class="num">7</span>, <span class="num">9</span>, <span class="num">11</span>, <span class="num">13</span>, <span class="num">15</span>]
+<span class="fn">print</span>(binary_search(nums, <span class="num">7</span>))   <span class="cm"># → 3</span>`,
+    opsCalc: n => Math.max(1, Math.ceil(Math.log2(n))),
+    analogy: `
+      <div style="font-size:3rem;text-align:center;margin-bottom:12px">📚</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:8px">Guessing a number 1–100</div>
+      <div style="color:var(--muted);font-size:0.875rem;line-height:1.7">
+        "I'm thinking of a number 1–100. Guess!" You say <strong style="color:var(--text)">50</strong>. "Too low." You say <strong style="color:var(--text)">75</strong>. "Too high." You say <strong style="color:var(--text)">62</strong>...<br><br>
+        Each guess <strong style="color:#38bdf8">cuts the remaining options in HALF</strong>. For 100 numbers, you need at most <strong style="color:#38bdf8">7 guesses</strong>. For 1 million numbers? Only <strong style="color:#38bdf8">20 guesses!</strong>
+      </div>
+    `,
+    tips: [
+      { icon: "✂️", title: "Halving is Powerful", text: "Going from n=1,024 to n=1,048,576 (1000x bigger), you only need 10 more steps. Insane efficiency!" },
+      { icon: "🌳", title: "Used in Trees", text: "Binary search trees, databases, and file systems all use O(log n) to find data instantly." },
+      { icon: "📐", title: "The Math Trick", text: "log₂(n) and log₁₀(n) differ by a constant factor (log₂/log₁₀ ≈ 3.32) — so Big O ignores the base!" }
+    ]
+  },
+
+  on: {
+    notation: "O(n)",
+    name: "Linear Time",
+    tagline: "Operations grow in direct proportion to input size — fair and predictable",
+    color: "#a78bfa",
+    badgeTime: { label: "Time", color: "#a78bfa", value: "🟣 Good" },
+    badgeSpace: { label: "Space", color: "#a78bfa", value: "🟣 Good" },
+    formula: "f(n) = n",
+    mathExplain: `
+      <p>Linear means <strong>directly proportional</strong>. If n doubles, the work doubles.</p>
+      <br>
+      <p>📊 The equation y = n is the simplest line through the origin:</p>
+      <p>• n = <strong>10</strong> → 10 operations</p>
+      <p>• n = <strong>100</strong> → 100 operations</p>
+      <p>• n = <strong>1,000</strong> → 1,000 operations</p>
+      <br>
+      <p>📌 <strong>Big O drops constants:</strong> f(n) = 3n is still O(n) because constants don't change the <em>shape</em> of growth — only how fast it scales.</p>
+    `,
+    code: `<span class="cm"># O(n) — Linear Time</span>
+<span class="cm"># Must visit every single element once</span>
+
+<span class="kw">def</span> <span class="fn">find_max</span>(numbers):
+    max_val = numbers[<span class="num">0</span>]
+    
+    <span class="kw">for</span> num <span class="kw">in</span> numbers:        <span class="cm"># ← n iterations</span>
+        <span class="kw">if</span> num > max_val:
+            max_val = num
+    
+    <span class="kw">return</span> max_val
+
+<span class="cm"># Linear search — check each item</span>
+<span class="kw">def</span> <span class="fn">linear_search</span>(arr, target):
+    <span class="kw">for</span> i, val <span class="kw">in</span> <span class="fn">enumerate</span>(arr):  <span class="cm"># ← n steps</span>
+        <span class="kw">if</span> val == target:
+            <span class="kw">return</span> i
+    <span class="kw">return</span> -<span class="num">1</span>
+
+nums = [<span class="num">42</span>, <span class="num">17</span>, <span class="num">89</span>, <span class="num">5</span>, <span class="num">61</span>]
+<span class="fn">print</span>(find_max(nums))         <span class="cm"># → 89</span>
+<span class="fn">print</span>(linear_search(nums, <span class="num">17</span>)) <span class="cm"># → 1</span>`,
+    opsCalc: n => n,
+    analogy: `
+      <div style="font-size:3rem;text-align:center;margin-bottom:12px">🔍</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:8px">Reading every page of a book</div>
+      <div style="color:var(--muted);font-size:0.875rem;line-height:1.7">
+        If you want to find a specific word in a book with <strong style="color:var(--text)">no index</strong>, you have to read every page. A 100-page book takes 2x longer than a 50-page book.<br><br>
+        The time grows <strong style="color:#a78bfa">directly with the size</strong>. Double the book, double the work. That's linear!
+      </div>
+    `,
+    tips: [
+      { icon: "🔄", title: "One Loop = O(n)", text: "A single for-loop through n items is linear. Two separate loops? Still O(n) — we add, not multiply." },
+      { icon: "➕", title: "Addition Rule", text: "O(n) + O(n) = O(2n) = O(n). Big O ignores constant multipliers." },
+      { icon: "🏆", title: "Often Optimal", text: "For unsorted data, you can't do better than O(n) to find something. You must check each item at least once." }
+    ]
+  },
+
+  onlog: {
+    notation: "O(n log n)",
+    name: "Linearithmic Time",
+    tagline: "The sweet spot for sorting — better than quadratic, not quite linear",
+    color: "#fbbf24",
+    badgeTime: { label: "Time", color: "#fbbf24", value: "🟡 Decent" },
+    badgeSpace: { label: "Space", color: "#a78bfa", value: "🟣 Good" },
+    formula: "f(n) = n · log₂(n)",
+    mathExplain: `
+      <p>This combines both patterns: <strong>n</strong> items each requiring <strong>log n</strong> steps.</p>
+      <br>
+      <p>Think of it as doing a log n operation <em>for each</em> of the n items:</p>
+      <p>• n=<strong>10</strong> → 10 × 3.3 ≈ <strong>33</strong> operations</p>
+      <p>• n=<strong>100</strong> → 100 × 6.6 ≈ <strong>660</strong> operations</p>
+      <p>• n=<strong>1,000</strong> → 1000 × 10 = <strong>10,000</strong> operations</p>
+      <br>
+      <p>📌 <strong>Proven Lower Bound:</strong> Any comparison-based sort <em>must</em> be at least O(n log n). Merge Sort and Heap Sort achieve this optimally!</p>
+    `,
+    code: `<span class="cm"># O(n log n) — Merge Sort</span>
+<span class="cm"># Split list in half, sort each half,</span>
+<span class="cm"># then merge them back together</span>
+
+<span class="kw">def</span> <span class="fn">merge_sort</span>(arr):
+    <span class="kw">if</span> <span class="fn">len</span>(arr) <= <span class="num">1</span>:
+        <span class="kw">return</span> arr            <span class="cm"># Base case: already sorted</span>
+    
+    mid = <span class="fn">len</span>(arr) // <span class="num">2</span>
+    left = <span class="fn">merge_sort</span>(arr[:mid])   <span class="cm"># log n splits</span>
+    right = <span class="fn">merge_sort</span>(arr[mid:])
+    
+    <span class="kw">return</span> <span class="fn">merge</span>(left, right)       <span class="cm"># n merges per level</span>
+
+<span class="kw">def</span> <span class="fn">merge</span>(left, right):
+    result = []
+    i = j = <span class="num">0</span>
+    <span class="kw">while</span> i < <span class="fn">len</span>(left) <span class="kw">and</span> j < <span class="fn">len</span>(right):
+        <span class="kw">if</span> left[i] <= right[j]:
+            result.append(left[i]); i += <span class="num">1</span>
+        <span class="kw">else</span>:
+            result.append(right[j]); j += <span class="num">1</span>
+    <span class="kw">return</span> result + left[i:] + right[j:]
+
+<span class="cm"># Python's built-in sort is also O(n log n)!</span>
+<span class="fn">print</span>(<span class="fn">merge_sort</span>([<span class="num">38</span>, <span class="num">27</span>, <span class="num">43</span>, <span class="num">3</span>]))  <span class="cm"># → [3, 27, 38, 43]</span>`,
+    opsCalc: n => Math.round(n * Math.log2(Math.max(2, n))),
+    analogy: `
+      <div style="font-size:3rem;text-align:center;margin-bottom:12px">🃏</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:8px">Sorting a deck of cards by splitting</div>
+      <div style="color:var(--muted);font-size:0.875rem;line-height:1.7">
+        Split 52 cards into two piles (log n splits). Sort each half, then merge them back in order. Each card is compared about <strong style="color:#fbbf24">log₂(52) ≈ 6 times</strong>.<br><br>
+        52 × 6 ≈ <strong style="color:#fbbf24">312 comparisons</strong> total. Much better than comparing every card to every other card!
+      </div>
+    `,
+    tips: [
+      { icon: "🏅", title: "Best Possible Sort", text: "O(n log n) is the mathematical lower bound for sorting. You literally cannot sort faster using comparisons!" },
+      { icon: "🐍", title: "Python Uses This", text: "Python's sorted() and list.sort() use Timsort — an O(n log n) algorithm optimized for real-world data." },
+      { icon: "📊", title: "vs Quadratic", text: "For n=1,000,000: O(n log n) = 20M ops vs O(n²) = 1 TRILLION ops. The difference is staggering!" }
+    ]
+  },
+
+  on2: {
+    notation: "O(n²)",
+    name: "Quadratic Time",
+    tagline: "Nested loops — works for small inputs, painful for large ones",
+    color: "#f87171",
+    badgeTime: { label: "Time", color: "#f87171", value: "🔴 Slow" },
+    badgeSpace: { label: "Space", color: "#4ade80", value: "🟢 OK" },
+    formula: "f(n) = n²",
+    mathExplain: `
+      <p>Quadratic growth means <strong>n × n operations</strong>. This is what happens with nested loops.</p>
+      <br>
+      <p>📊 Growth is brutal:</p>
+      <p>• n=<strong>10</strong> → <strong>100</strong> operations</p>
+      <p>• n=<strong>100</strong> → <strong>10,000</strong> operations</p>
+      <p>• n=<strong>1,000</strong> → <strong>1,000,000</strong> operations</p>
+      <br>
+      <p>📌 <strong>The Math:</strong> f(n) = n² is a parabola. Notice how <em>steep</em> the chart gets? Even going from n=8 to n=10 doubles+ the work.</p>
+    `,
+    code: `<span class="cm"># O(n²) — Quadratic Time</span>
+<span class="cm"># Nested loops: check every pair of elements</span>
+
+<span class="kw">def</span> <span class="fn">bubble_sort</span>(arr):
+    n = <span class="fn">len</span>(arr)
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(n):            <span class="cm"># ← outer loop: n</span>
+        <span class="kw">for</span> j <span class="kw">in</span> <span class="fn">range</span>(n - i - <span class="num">1</span>):  <span class="cm"># ← inner loop: n</span>
+            <span class="kw">if</span> arr[j] > arr[j + <span class="num">1</span>]:   <span class="cm"># n × n = n² total</span>
+                arr[j], arr[j+<span class="num">1</span>] = arr[j+<span class="num">1</span>], arr[j]
+    <span class="kw">return</span> arr
+
+<span class="cm"># Find all pairs that sum to target</span>
+<span class="kw">def</span> <span class="fn">find_pairs</span>(nums, target):
+    pairs = []
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(nums)):       <span class="cm"># ← n</span>
+        <span class="kw">for</span> j <span class="kw">in</span> <span class="fn">range</span>(i+<span class="num">1</span>, <span class="fn">len</span>(nums)): <span class="cm"># ← n</span>
+            <span class="kw">if</span> nums[i] + nums[j] == target:
+                pairs.append((nums[i], nums[j]))
+    <span class="kw">return</span> pairs
+
+<span class="fn">print</span>(bubble_sort([<span class="num">64</span>, <span class="num">34</span>, <span class="num">25</span>, <span class="num">12</span>]))  <span class="cm"># [12,25,34,64]</span>`,
+    opsCalc: n => n * n,
+    analogy: `
+      <div style="font-size:3rem;text-align:center;margin-bottom:12px">🤝</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:8px">Handshakes at a party</div>
+      <div style="color:var(--muted);font-size:0.875rem;line-height:1.7">
+        If 5 people each shake hands with every other person, that's <strong style="color:var(--text)">5 × 4 / 2 = 10</strong> handshakes. With 10 people? 45 handshakes. With 100? <strong style="color:#f87171">4,950 handshakes!</strong><br><br>
+        Every person must interact with every other — that's quadratic growth.
+      </div>
+    `,
+    tips: [
+      { icon: "🚨", title: "Red Flag: Nested Loops", text: 'Two nested for-loops over the same data = O(n²). Watch for "for i in range(n): for j in range(n):".' },
+      { icon: "🔄", title: "Bubble Sort", text: "Classic example: compare each element with every other. Works great for n < 1000, terrible for n > 100,000." },
+      { icon: "💡", title: "Can We Do Better?", text: "Often yes! Many O(n²) algorithms can be replaced with O(n log n) using sorting or O(n) using hash maps." }
+    ]
+  },
+
+  o2n: {
+    notation: "O(2ⁿ)",
+    name: "Exponential Time",
+    tagline: "Doubles with each new element — only feasible for tiny inputs",
+    color: "#ef4444",
+    badgeTime: { label: "Time", color: "#ef4444", value: "💀 Terrible" },
+    badgeSpace: { label: "Space", color: "#f87171", value: "🔴 Bad" },
+    formula: "f(n) = 2ⁿ",
+    mathExplain: `
+      <p>Exponential means the work <strong>DOUBLES</strong> for each additional input element.</p>
+      <br>
+      <p>📊 This grows insanely fast:</p>
+      <p>• n=<strong>10</strong> → <strong>1,024</strong> operations</p>
+      <p>• n=<strong>20</strong> → <strong>1,048,576</strong> (1 million!)</p>
+      <p>• n=<strong>50</strong> → <strong>~1 quadrillion</strong> (impossible!)</p>
+      <br>
+      <p>📌 <strong>The Math:</strong> 2ⁿ grows so fast it makes n² look flat. This is the realm of <em>NP-hard</em> problems — no known efficient solution exists for many of these!</p>
+    `,
+    code: `<span class="cm"># O(2ⁿ) — Exponential Time</span>
+<span class="cm"># Each call spawns 2 more calls!</span>
+
+<span class="kw">def</span> <span class="fn">fibonacci_naive</span>(n):
+    <span class="cm"># Classic (bad) Fibonacci — two recursive calls</span>
+    <span class="kw">if</span> n <= <span class="num">1</span>:
+        <span class="kw">return</span> n
+    
+    <span class="cm"># Each call branches into 2 more calls...</span>
+    <span class="cm"># fib(5) → fib(4) + fib(3)</span>
+    <span class="cm"># fib(4) → fib(3) + fib(2)  ← REPEATED WORK!</span>
+    <span class="kw">return</span> <span class="fn">fibonacci_naive</span>(n-<span class="num">1</span>) + <span class="fn">fibonacci_naive</span>(n-<span class="num">2</span>)
+
+<span class="cm"># All subsets of a set (Power Set)</span>
+<span class="kw">def</span> <span class="fn">power_set</span>(items):
+    <span class="kw">if</span> <span class="fn">len</span>(items) == <span class="num">0</span>:
+        <span class="kw">return</span> [[]]
+    first = items[<span class="num">0</span>]
+    rest = <span class="fn">power_set</span>(items[<span class="num">1</span>:])
+    <span class="kw">return</span> rest + [[first] + s <span class="kw">for</span> s <span class="kw">in</span> rest]
+
+<span class="cm"># ✅ Fix: Use Dynamic Programming → O(n)</span>
+<span class="kw">def</span> <span class="fn">fibonacci_fast</span>(n):
+    a, b = <span class="num">0</span>, <span class="num">1</span>
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(n): a, b = b, a + b
+    <span class="kw">return</span> a`,
+    opsCalc: n => Math.min(Math.pow(2, Math.min(n, 30)), 1e12),
+    analogy: `
+      <div style="font-size:3rem;text-align:center;margin-bottom:12px">🌾</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:8px">The wheat and chessboard problem</div>
+      <div style="color:var(--muted);font-size:0.875rem;line-height:1.7">
+        Put 1 grain on square 1, 2 on square 2, 4 on square 3... doubling each time. By square 64, you'd need <strong style="color:#ef4444">18 quintillion grains</strong> — more than all wheat ever harvested!<br><br>
+        That's 2ⁿ — it seems manageable at first, then becomes <strong style="color:#ef4444">completely impossible</strong>.
+      </div>
+    `,
+    tips: [
+      { icon: "💀", title: "Avoid in Production", text: "n=50 means 1 quadrillion operations. Even at 1 billion ops/sec, that's 11 days. n=100? Longer than the universe!" },
+      { icon: "🌲", title: "Where It Appears", text: "Naive recursive Fibonacci, generating all subsets (power set), solving Towers of Hanoi, some NP-complete problems." },
+      { icon: "🚀", title: "The Fix: Memoization", text: "Store results of sub-problems. Fibonacci goes from O(2ⁿ) to O(n) with Dynamic Programming — a massive win!" }
+    ]
+  }
+};
+
+const tableData = [
+  { id: "o1",    notation: "O(1)",       name: "Constant",       n10: "1",           n100: "1",        n1k: "1",           color: "#4ade80",  speed: "Excellent" },
+  { id: "olog",  notation: "O(log n)",   name: "Logarithmic",    n10: "~3",          n100: "~7",       n1k: "~10",         color: "#38bdf8",  speed: "Great" },
+  { id: "on",    notation: "O(n)",       name: "Linear",         n10: "10",          n100: "100",      n1k: "1,000",       color: "#a78bfa",  speed: "Good" },
+  { id: "onlog", notation: "O(n log n)", name: "Linearithmic",   n10: "~33",         n100: "~664",     n1k: "~10,000",     color: "#fbbf24",  speed: "Decent" },
+  { id: "on2",   notation: "O(n²)",      name: "Quadratic",      n10: "100",         n100: "10,000",   n1k: "1,000,000",   color: "#f87171",  speed: "Slow" },
+  { id: "o2n",   notation: "O(2ⁿ)",      name: "Exponential",    n10: "1,024",       n100: "10³⁰",     n1k: "∞ (gg)",      color: "#ef4444",  speed: "💀" },
+];
+
+// ============================================================
+// CHART SETUP
+// ============================================================
+const ctx = document.getElementById('complexityChart').getContext('2d');
+const chartData = generateChartData();
+
+function generateChartData() {
+  const labels = [];
+  const datasets = {
+    o1: [], olog: [], on: [], onlog: [], on2: [], o2n: []
+  };
+  for (let n = 1; n <= 20; n++) {
+    labels.push(n);
+    datasets.o1.push(1);
+    datasets.olog.push(Math.log2(n) || 0);
+    datasets.on.push(n);
+    datasets.onlog.push(n * (Math.log2(n) || 0));
+    datasets.on2.push(n * n);
+    datasets.o2n.push(Math.min(Math.pow(2, n), 500));
+  }
+  return { labels, datasets };
+}
+
+const allDatasets = [
+  { id: "o1",    label: "O(1)",       data: chartData.datasets.o1,    borderColor: "#4ade80", backgroundColor: "rgba(74,222,128,0.05)" },
+  { id: "olog",  label: "O(log n)",   data: chartData.datasets.olog,  borderColor: "#38bdf8", backgroundColor: "rgba(56,189,248,0.05)" },
+  { id: "on",    label: "O(n)",       data: chartData.datasets.on,    borderColor: "#a78bfa", backgroundColor: "rgba(167,139,250,0.05)" },
+  { id: "onlog", label: "O(n log n)", data: chartData.datasets.onlog, borderColor: "#fbbf24", backgroundColor: "rgba(251,191,36,0.05)" },
+  { id: "on2",   label: "O(n²)",      data: chartData.datasets.on2,   borderColor: "#f87171", backgroundColor: "rgba(248,113,113,0.05)" },
+  { id: "o2n",   label: "O(2ⁿ)",      data: chartData.datasets.o2n,   borderColor: "#ef4444", backgroundColor: "rgba(239,68,68,0.05)" },
+];
+
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: chartData.labels,
+    datasets: allDatasets.map(d => ({
+      ...d,
+      borderWidth: 2,
+      pointRadius: 2,
+      tension: 0.3,
+      fill: false,
+    }))
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 400 },
+    plugins: {
+      legend: {
+        labels: {
+          color: '#94a3b8',
+          font: { family: 'Space Mono', size: 11 },
+          padding: 12,
+          usePointStyle: true,
+          pointStyleWidth: 14
+        }
+      },
+      tooltip: {
+        backgroundColor: '#1a2235',
+        borderColor: '#2a3550',
+        borderWidth: 1,
+        titleColor: '#e2e8f0',
+        bodyColor: '#94a3b8',
+        titleFont: { family: 'Space Mono' },
+        bodyFont: { family: 'DM Sans' },
+      }
+    },
+    scales: {
+      x: {
+        title: { display: true, text: 'Input Size (n)', color: '#94a3b8', font: { family: 'Space Mono', size: 11 } },
+        grid: { color: 'rgba(42,53,80,0.5)' },
+        ticks: { color: '#94a3b8', font: { family: 'Space Mono', size: 10 } }
+      },
+      y: {
+        title: { display: true, text: 'Operations', color: '#94a3b8', font: { family: 'Space Mono', size: 11 } },
+        grid: { color: 'rgba(42,53,80,0.5)' },
+        ticks: { color: '#94a3b8', font: { family: 'Space Mono', size: 10 } }
+      }
+    }
+  }
+});
+
+// ============================================================
+// UI UPDATES
+// ============================================================
+let current = 'o1';
+
+function updateUI(id) {
+  current = id;
+  const data = complexities[id];
+
+  // Hero
+  const hero = document.getElementById('complexityHero');
+  hero.className = `complexity-hero theme-${id}`;
+  document.getElementById('cNotation').textContent = data.notation;
+  document.getElementById('cName').textContent = data.name;
+  document.getElementById('cTagline').textContent = data.tagline;
+
+  // Badges
+  const badgesEl = document.getElementById('cBadges');
+  badgesEl.innerHTML = `
+    <span class="badge" style="color:${data.badgeTime.color};border-color:${data.badgeTime.color}40">${data.badgeTime.value} Time</span>
+    <span class="badge" style="color:${data.badgeSpace.color};border-color:${data.badgeSpace.color}40">${data.badgeSpace.value} Space</span>
+  `;
+
+  // Code
+  document.getElementById('codeDisplay').innerHTML = data.code;
+
+  // Math
+  document.getElementById('mathFormula').textContent = data.formula;
+  document.getElementById('mathExplain').innerHTML = data.mathExplain;
+
+  // Analogy
+  document.getElementById('analogyBody').innerHTML = data.analogy;
+
+  // Tips
+  document.getElementById('explainRow').innerHTML = data.tips.map(t => `
+    <div class="explain-card">
+      <div class="explain-card-icon">${t.icon}</div>
+      <div class="explain-card-title">${t.title}</div>
+      <div class="explain-card-text">${t.text}</div>
+    </div>
+  `).join('');
+
+  // Update chart — highlight active dataset
+  chart.data.datasets.forEach((ds, i) => {
+    const isActive = allDatasets[i].id === id;
+    ds.borderWidth = isActive ? 4 : 1;
+    ds.pointRadius = isActive ? 4 : 1;
+    ds.borderColor = allDatasets[i].borderColor;
+    ds.backgroundColor = isActive
+      ? allDatasets[i].borderColor.replace(')', ',0.1)').replace('rgb', 'rgba')
+      : 'transparent';
+    ds.order = isActive ? 0 : 1;
+    ds.borderDash = isActive ? [] : [4, 4];
+  });
+  chart.update();
+
+  // Update table highlight
+  document.querySelectorAll('#complexityTable tr').forEach(tr => {
+    tr.classList.toggle('active-row', tr.dataset.id === id);
+  });
+
+  // Update step demo
+  updateStepDemo();
+
+  // Update nav
+  document.querySelectorAll('.cn-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.id === id);
+  });
+}
+
+// STEP DEMO
+const slider = document.getElementById('nSlider');
+const nVal = document.getElementById('nVal');
+const opsVal = document.getElementById('opsVal');
+const stepBar = document.getElementById('stepBar');
+
+function updateStepDemo() {
+  const n = parseInt(slider.value);
+  nVal.textContent = n;
+  const ops = complexities[current].opsCalc(n);
+  opsVal.textContent = ops > 1e9 ? '> 1 billion 💀' : ops > 1e6 ? (ops / 1e6).toFixed(1) + 'M' : ops > 1e3 ? (ops / 1e3).toFixed(1) + 'K' : ops.toLocaleString();
+  // Bar: normalize against max possible (n=100 for on2 or cap at 100)
+  const maxOps = complexities[current].opsCalc(100);
+  const pct = Math.min(100, (ops / maxOps) * 100);
+  stepBar.style.width = Math.max(2, pct) + '%';
+}
+
+slider.addEventListener('input', updateStepDemo);
+
+// NAV CLICKS
+document.getElementById('complexityNav').addEventListener('click', e => {
+  const btn = e.target.closest('.cn-btn');
+  if (btn) updateUI(btn.dataset.id);
+});
+
+// BUILD TABLE
+function buildTable() {
+  const tbody = document.getElementById('complexityTable');
+  tbody.innerHTML = tableData.map(row => `
+    <tr data-id="${row.id}" onclick="updateUI('${row.id}')" style="cursor:pointer" ${row.id === 'o1' ? 'class="active-row"' : ''}>
+      <td><span class="tbl-notation" style="color:${row.color}">${row.notation}</span></td>
+      <td style="color:var(--muted)">${row.name}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:0.8rem">${row.n10}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:0.8rem">${row.n100}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:0.8rem">${row.n1k}</td>
+      <td><span class="speed-dot" style="background:${row.color}"></span><span style="font-size:0.85rem;color:var(--muted)">${row.speed}</span></td>
+    </tr>
+  `).join('');
+}
+
+buildTable();
+updateUI('o1');
+</script>
+</body>
+</html>
