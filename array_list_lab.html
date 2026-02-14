@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python Arrays & Lists — Interactive Learning Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #a855f7;
+    --green: #22c55e;
+    --yellow: #fbbf24;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --code-bg: #0d1117;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1300px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* HEADER */
+  header {
+    padding: 36px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .logo-area h1 {
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  .logo-area h1 span.py { color: var(--accent); }
+  .logo-area h1 span.lab { color: var(--accent2); }
+
+  .logo-area p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 4px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,229,255,0.1);
+    border: 1px solid rgba(0,229,255,0.25);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 6px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .tab-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  .tab-btn:hover:not(.active) {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeIn 0.25s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title span.dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* ARRAY VISUALIZER */
+  .visualizer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  @media(max-width: 768px) { .visualizer-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .card-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  /* Array slots */
+  .array-display {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    align-items: stretch;
+    margin-bottom: 12px;
+  }
+
+  .array-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .array-cell {
+    width: 52px;
+    height: 52px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    background: var(--surface2);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: default;
+    color: var(--text);
+    position: relative;
+  }
+
+  .array-cell.highlighted {
+    border-color: var(--accent);
+    background: rgba(0,229,255,0.12);
+    color: var(--accent);
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 8px 24px rgba(0,229,255,0.25);
+  }
+
+  .array-cell.removed {
+    border-color: var(--red);
+    background: rgba(239,68,68,0.1);
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  .array-cell.added {
+    border-color: var(--green);
+    background: rgba(34,197,94,0.12);
+    color: var(--green);
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .index-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 5px;
+    text-align: center;
+  }
+
+  .neg-index {
+    color: var(--accent3);
+    font-size: 0.6rem;
+  }
+
+  /* Controls */
+  .controls-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .input-field {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    padding: 8px 12px;
+    width: 80px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .input-field:focus { border-color: var(--accent); }
+
+  .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-accent { background: var(--accent); color: var(--bg); }
+  .btn-accent:hover { background: #26f7ff; transform: translateY(-1px); }
+  .btn-orange { background: var(--accent2); color: white; }
+  .btn-orange:hover { background: #ff8552; transform: translateY(-1px); }
+  .btn-purple { background: var(--accent3); color: white; }
+  .btn-purple:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-green { background: var(--green); color: var(--bg); }
+  .btn-green:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-red { background: var(--red); color: white; }
+  .btn-red:hover { opacity: 0.85; transform: translateY(-1px); }
+
+  /* CODE PANEL */
+  .code-panel {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 16px;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+
+  .code-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .code-body {
+    padding: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .code-body pre { white-space: pre-wrap; word-break: break-word; }
+
+  .kw { color: #ff7b72; }
+  .fn { color: #79c0ff; }
+  .str { color: #a5d6ff; }
+  .num { color: #f8c555; }
+  .cm { color: #8b949e; }
+  .var { color: #ffa657; }
+  .op { color: #79c0ff; }
+  .bracket { color: var(--muted); }
+
+  /* OUTPUT LOG */
+  .output-log {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    min-height: 48px;
+    color: var(--green);
+    margin-top: 12px;
+    border-left: 3px solid var(--green);
+  }
+
+  .output-log.error { color: var(--red); border-left-color: var(--red); }
+  .output-log.info { color: var(--accent); border-left-color: var(--accent); }
+
+  /* CHALLENGE SECTION */
+  .challenge-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .challenge-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: var(--accent2);
+    border-radius: 4px 0 0 4px;
+  }
+
+  .challenge-card.hard::before { background: var(--red); }
+  .challenge-card.medium::before { background: var(--yellow); }
+  .challenge-card.easy::before { background: var(--green); }
+
+  .difficulty-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+
+  .difficulty-tag.easy { background: rgba(34,197,94,0.15); color: var(--green); }
+  .difficulty-tag.medium { background: rgba(251,191,36,0.15); color: var(--yellow); }
+  .difficulty-tag.hard { background: rgba(239,68,68,0.15); color: var(--red); }
+
+  .challenge-title { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+  .challenge-desc { color: var(--muted); font-size: 0.84rem; line-height: 1.6; margin-bottom: 14px; }
+
+  .code-editor {
+    width: 100%;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    padding: 12px;
+    resize: vertical;
+    min-height: 100px;
+    outline: none;
+    line-height: 1.6;
+    transition: border-color 0.2s;
+  }
+
+  .code-editor:focus { border-color: var(--accent); }
+
+  .challenge-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .hint-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: none;
+  }
+
+  .hint-text.show { display: block; color: var(--yellow); }
+
+  /* COMPLEXITY TABLE */
+  .complexity-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .complexity-table th {
+    padding: 10px 14px;
+    text-align: left;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .complexity-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(30,45,69,0.6);
+  }
+
+  .complexity-table tr:last-child td { border-bottom: none; }
+
+  .complexity-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .o-good { color: var(--green); font-weight: 600; }
+  .o-ok { color: var(--yellow); font-weight: 600; }
+  .o-bad { color: var(--red); font-weight: 600; }
+
+  /* METHODS EXPLORER */
+  .methods-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
+
+  .method-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .method-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0,229,255,0.08);
+  }
+
+  .method-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .method-sig {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .method-desc {
+    font-size: 0.78rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .method-example {
+    margin-top: 10px;
+    background: var(--code-bg);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.74rem;
+    color: var(--muted);
+    display: none;
+  }
+
+  .method-card.expanded .method-example { display: block; }
+  .method-card.expanded { border-color: var(--accent3); }
+
+  /* SORTING VIZ */
+  .sort-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .bars-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 160px;
+    padding: 0 4px;
+    margin: 16px 0;
+  }
+
+  .bar {
+    flex: 1;
+    border-radius: 4px 4px 0 0;
+    background: var(--accent);
+    transition: all 0.3s ease;
+    min-width: 20px;
+    position: relative;
+  }
+
+  .bar.comparing { background: var(--yellow); }
+  .bar.swapping { background: var(--accent2); }
+  .bar.sorted { background: var(--green); }
+
+  .bar-val {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* SLICING VIZ */
+  .slice-display {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 12px 0;
+  }
+
+  .slice-cell {
+    width: 48px;
+    height: 48px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: var(--surface2);
+    transition: all 0.3s;
+  }
+
+  .slice-cell.in-slice {
+    border-color: var(--accent2);
+    background: rgba(255,107,53,0.15);
+    color: var(--accent2);
+    transform: translateY(-4px);
+  }
+
+  .slice-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .slice-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .slice-label strong { color: var(--accent); }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+
+  /* PROGRESS */
+  .progress-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .progress-item {
+    flex: 1;
+    min-width: 100px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: center;
+  }
+
+  .progress-num {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--accent);
+    display: block;
+  }
+
+  .progress-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* TOOLTIP */
+  .tooltip {
+    position: fixed;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 1000;
+    max-width: 200px;
+  }
+
+  .scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar::-webkit-scrollbar-track { background: var(--code-bg); }
+  .scrollbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Memory model */
+  .memory-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 120px;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    margin-bottom: 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    transition: all 0.3s;
+  }
+
+  .memory-row.active { border-color: var(--accent); background: rgba(0,229,255,0.06); }
+  .memory-addr { color: var(--muted); }
+  .memory-val { color: var(--accent); font-weight: 600; }
+  .memory-ref { color: var(--accent3); font-size: 0.7rem; }
+
+</style>
+</head>
+<body>
+
+<div id="tooltip" class="tooltip"></div>
+
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo-area">
+        <h1><span class="py">Python</span> <span class="lab">Arrays & Lists</span> Lab</h1>
+        <p>// interactive learning environment — v2.0</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <span class="badge"><span>●</span> Interactive</span>
+        <span class="badge" style="border-color:rgba(168,85,247,0.3);background:rgba(168,85,247,0.1);color:var(--accent3)"><span>◆</span> Visual</span>
+        <span class="badge" style="border-color:rgba(255,107,53,0.3);background:rgba(255,107,53,0.1);color:var(--accent2)"><span>▲</span> Challenges</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- PROGRESS -->
+  <div class="progress-row">
+    <div class="progress-item">
+      <span class="progress-num" id="ops-count">0</span>
+      <span class="progress-label">operations run</span>
+    </div>
+    <div class="progress-item">
+      <span class="progress-num" id="challenges-done">0/3</span>
+      <span class="progress-label">challenges solved</span>
+    </div>
+    <div class="progress-item">
+      <span class="progress-num" style="color:var(--accent2)">5</span>
+      <span class="progress-label">list methods</span>
+    </div>
+    <div class="progress-item">
+      <span class="progress-num" style="color:var(--accent3)">∞</span>
+      <span class="progress-label">dynamic size</span>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('visualizer')">🔢 List Visualizer</button>
+    <button class="tab-btn" onclick="switchTab('slicing')">✂️ Slicing & Indexing</button>
+    <button class="tab-btn" onclick="switchTab('methods')">🔧 Methods Explorer</button>
+    <button class="tab-btn" onclick="switchTab('sorting')">📊 Sorting Visualizer</button>
+    <button class="tab-btn" onclick="switchTab('challenges')">🏆 Challenges</button>
+    <button class="tab-btn" onclick="switchTab('complexity')">⏱ Complexity</button>
+  </div>
+
+  <!-- ======== TAB 1: LIST VISUALIZER ======== -->
+  <div id="tab-visualizer" class="tab-panel active">
+    <div class="visualizer-grid">
+
+      <div class="card">
+        <div class="card-title">List State</div>
+        <div class="array-display" id="main-array"></div>
+        <div class="output-log info" id="main-output">Ready — try an operation below!</div>
+        <div class="controls-row">
+          <input class="input-field" id="push-val" placeholder="value" type="text" maxlength="6">
+          <button class="btn btn-green" onclick="doAppend()">append()</button>
+          <button class="btn btn-orange" onclick="doPop()">pop()</button>
+          <button class="btn btn-ghost" onclick="doReverse()">reverse()</button>
+          <button class="btn btn-ghost" onclick="doSort()">sort()</button>
+        </div>
+        <div class="controls-row">
+          <input class="input-field" id="insert-idx" placeholder="index" type="number" min="0" style="width:68px">
+          <input class="input-field" id="insert-val" placeholder="value" type="text" maxlength="6">
+          <button class="btn btn-purple" onclick="doInsert()">insert()</button>
+          <input class="input-field" id="remove-val" placeholder="value" type="text" maxlength="6" style="width:80px">
+          <button class="btn btn-red" onclick="doRemove()">remove()</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Live Code Output</div>
+        <div class="code-panel">
+          <div class="code-header">
+            <span class="code-dot" style="background:#ff5f57"></span>
+            <span class="code-dot" style="background:#febc2e"></span>
+            <span class="code-dot" style="background:#28c840"></span>
+            <span style="font-family:JetBrains Mono,monospace;font-size:0.72rem;color:var(--muted);margin-left:8px">main.py</span>
+          </div>
+          <div class="code-body scrollbar" id="live-code">
+            <pre id="code-content"><span class="cm"># Your list operations will appear here</span>
+<span class="var">my_list</span> <span class="op">=</span> <span class="bracket">[</span><span class="num">10</span><span class="bracket">,</span> <span class="num">25</span><span class="bracket">,</span> <span class="num">7</span><span class="bracket">,</span> <span class="num">42</span><span class="bracket">,</span> <span class="num">3</span><span class="bracket">]</span>
+<span class="fn">print</span><span class="bracket">(</span><span class="var">my_list</span><span class="bracket">)</span>  <span class="cm"># [10, 25, 7, 42, 3]</span></pre>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px;">
+          <div class="card-title">Memory Model</div>
+          <div id="memory-model"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Index info -->
+    <div class="card">
+      <div class="card-title">Index Lookup</div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:var(--muted)">my_list[</span>
+          <input class="input-field" id="index-val" placeholder="0" type="number" style="width:68px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:var(--muted)">]</span>
+          <button class="btn btn-accent" onclick="doIndex()">Lookup</button>
+        </div>
+        <div class="output-log info" id="index-output" style="flex:1;margin-top:0">Enter an index to look up its value</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== TAB 2: SLICING ======== -->
+  <div id="tab-slicing" class="tab-panel">
+    <div class="card" style="margin-bottom:20px">
+      <div class="section-title">
+        <span class="dot" style="background:var(--accent2)"></span>
+        Python List Slicing: <code style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:0.9rem">my_list[start:stop:step]</code>
+      </div>
+
+      <div class="slice-display" id="slice-array"></div>
+
+      <div class="slice-controls" style="margin-top:16px;gap:20px;">
+        <div class="slice-label">
+          start: <strong id="start-val">0</strong>
+          <input type="range" id="start-range" min="-1" max="8" value="0" oninput="updateSlice()">
+        </div>
+        <div class="slice-label">
+          stop: <strong id="stop-val">5</strong>
+          <input type="range" id="stop-range" min="-1" max="8" value="5" oninput="updateSlice()">
+        </div>
+        <div class="slice-label">
+          step: <strong id="step-val">1</strong>
+          <input type="range" id="step-range" min="1" max="3" value="1" oninput="updateSlice()">
+        </div>
+      </div>
+
+      <div class="code-panel" style="margin-top:16px;">
+        <div class="code-header">
+          <span class="code-dot" style="background:#ff5f57"></span>
+          <span class="code-dot" style="background:#febc2e"></span>
+          <span class="code-dot" style="background:#28c840"></span>
+          <span style="font-family:JetBrains Mono,monospace;font-size:0.72rem;color:var(--muted);margin-left:8px">slice_demo.py</span>
+        </div>
+        <div class="code-body">
+          <pre id="slice-code"></pre>
+        </div>
+      </div>
+      <div class="output-log" id="slice-result" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="visualizer-grid">
+      <div class="card">
+        <div class="card-title">Common Slice Patterns</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="btn btn-ghost" style="text-align:left;font-family:'JetBrains Mono',monospace;font-size:0.8rem" onclick="setSlice(0,5,2)">lst[::2] — every 2nd element</button>
+          <button class="btn btn-ghost" style="text-align:left;font-family:'JetBrains Mono',monospace;font-size:0.8rem" onclick="setSliceReverse()">lst[::-1] — reverse the list</button>
+          <button class="btn btn-ghost" style="text-align:left;font-family:'JetBrains Mono',monospace;font-size:0.8rem" onclick="setSlice(0,3,1)">lst[:3] — first 3 elements</button>
+          <button class="btn btn-ghost" style="text-align:left;font-family:'JetBrains Mono',monospace;font-size:0.8rem" onclick="setSlice(2,8,1)">lst[2:] — from index 2 to end</button>
+          <button class="btn btn-ghost" style="text-align:left;font-family:'JetBrains Mono',monospace;font-size:0.8rem" onclick="setSlice(1,6,2)">lst[1:6:2] — every 2nd from index 1</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Negative Indexing Explained</div>
+        <div style="font-size:0.85rem;line-height:1.7;color:var(--muted);">
+          <p>Python supports <span style="color:var(--accent3)">negative indices</span> to count from the end:</p>
+          <br>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;line-height:2;">
+            <div><span style="color:var(--accent2)">lst[-1]</span>  → last element</div>
+            <div><span style="color:var(--accent2)">lst[-2]</span>  → second to last</div>
+            <div><span style="color:var(--accent2)">lst[-3:]</span> → last 3 elements</div>
+            <div><span style="color:var(--accent2)">lst[:-1]</span> → all but last</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== TAB 3: METHODS ======== -->
+  <div id="tab-methods" class="tab-panel">
+    <div class="section-title" style="margin-bottom:20px">
+      <span class="dot" style="background:var(--green)"></span>
+      Built-in List Methods — click any card to see example
+    </div>
+    <div class="methods-grid" id="methods-grid"></div>
+  </div>
+
+  <!-- ======== TAB 4: SORTING ======== -->
+  <div id="tab-sorting" class="tab-panel">
+    <div class="sort-container">
+      <div class="section-title">
+        <span class="dot" style="background:var(--accent)"></span>
+        Sorting Algorithm Visualizer
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+        <select id="sort-algo" style="background:var(--code-bg);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-family:'Syne',sans-serif;font-size:0.82rem;outline:none;">
+          <option value="bubble">Bubble Sort — O(n²)</option>
+          <option value="selection">Selection Sort — O(n²)</option>
+          <option value="insertion">Insertion Sort — O(n²)</option>
+        </select>
+        <button class="btn btn-accent" onclick="startSort()">▶ Visualize</button>
+        <button class="btn btn-ghost" onclick="resetSort()">⟳ New Array</button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:0.75rem;color:var(--muted)">Speed:</span>
+          <input type="range" id="sort-speed" min="50" max="800" value="400" style="width:80px">
+        </div>
+      </div>
+
+      <div class="bars-container" id="bars-container"></div>
+
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px">
+        <span style="font-size:0.75rem;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:var(--accent);border-radius:2px;display:inline-block"></span>unsorted</span>
+        <span style="font-size:0.75rem;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:var(--yellow);border-radius:2px;display:inline-block"></span>comparing</span>
+        <span style="font-size:0.75px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:var(--accent2);border-radius:2px;display:inline-block"></span>swapping</span>
+        <span style="font-size:0.75rem;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:var(--green);border-radius:2px;display:inline-block"></span>sorted</span>
+      </div>
+
+      <div class="output-log info" id="sort-output" style="margin-top:12px">Select an algorithm and click Visualize!</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Python Sorting Syntax</div>
+      <div class="code-panel">
+        <div class="code-header">
+          <span class="code-dot" style="background:#ff5f57"></span>
+          <span class="code-dot" style="background:#febc2e"></span>
+          <span class="code-dot" style="background:#28c840"></span>
+        </div>
+        <div class="code-body">
+<pre><span class="cm"># Python's built-in sorting (TimSort — O(n log n))</span>
+<span class="var">nums</span> <span class="op">=</span> <span class="bracket">[</span><span class="num">64</span><span class="bracket">,</span> <span class="num">34</span><span class="bracket">,</span> <span class="num">25</span><span class="bracket">,</span> <span class="num">12</span><span class="bracket">,</span> <span class="num">22</span><span class="bracket">]</span>
+
+<span class="cm"># Method 1: sort() — modifies in-place</span>
+<span class="var">nums</span><span class="op">.</span><span class="fn">sort</span><span class="bracket">()</span>
+<span class="fn">print</span><span class="bracket">(</span><span class="var">nums</span><span class="bracket">)</span>           <span class="cm"># [12, 22, 25, 34, 64]</span>
+
+<span class="cm"># Method 2: sorted() — returns new list</span>
+<span class="var">original</span> <span class="op">=</span> <span class="bracket">[</span><span class="num">3</span><span class="bracket">,</span> <span class="num">1</span><span class="bracket">,</span> <span class="num">4</span><span class="bracket">,</span> <span class="num">1</span><span class="bracket">,</span> <span class="num">5</span><span class="bracket">]</span>
+<span class="var">sorted_list</span> <span class="op">=</span> <span class="fn">sorted</span><span class="bracket">(</span><span class="var">original</span><span class="bracket">)</span>
+
+<span class="cm"># Sort in reverse</span>
+<span class="var">nums</span><span class="op">.</span><span class="fn">sort</span><span class="bracket">(</span><span class="var">reverse</span><span class="op">=</span><span class="kw">True</span><span class="bracket">)</span>
+
+<span class="cm"># Sort by key (e.g., by string length)</span>
+<span class="var">words</span> <span class="op">=</span> <span class="bracket">[</span><span class="str">"banana"</span><span class="bracket">,</span> <span class="str">"apple"</span><span class="bracket">,</span> <span class="str">"fig"</span><span class="bracket">]</span>
+<span class="var">words</span><span class="op">.</span><span class="fn">sort</span><span class="bracket">(</span><span class="var">key</span><span class="op">=</span><span class="fn">len</span><span class="bracket">)</span>  <span class="cm"># ['fig', 'apple', 'banana']</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== TAB 5: CHALLENGES ======== -->
+  <div id="tab-challenges" class="tab-panel">
+    <div class="section-title" style="margin-bottom:20px">
+      <span class="dot" style="background:var(--accent2)"></span>
+      Coding Challenges — write Python list solutions
+    </div>
+
+    <!-- Challenge 1 -->
+    <div class="challenge-card easy" id="chal-1">
+      <span class="difficulty-tag easy">● Easy</span>
+      <div class="challenge-title">Find the Maximum Without max()</div>
+      <div class="challenge-desc">Write a function that finds the largest number in a list using only a loop — no built-in <code>max()</code> or <code>sorted()</code>. Input: <code>[3, 1, 4, 1, 5, 9, 2, 6]</code> → Output: <code>9</code></div>
+      <textarea class="code-editor" id="editor-1" spellcheck="false">def find_max(lst):
+    # Your code here
+    pass
+
+# Test:
+print(find_max([3, 1, 4, 1, 5, 9, 2, 6]))</textarea>
+      <div class="challenge-footer">
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-accent" onclick="checkChallenge(1)">▶ Run</button>
+          <button class="btn btn-ghost" onclick="toggleHint(1)">? Hint</button>
+        </div>
+        <div class="hint-text" id="hint-1">💡 Start with the first element as your "current max", then loop and compare each element.</div>
+      </div>
+      <div class="output-log" id="result-1" style="margin-top:12px;display:none"></div>
+    </div>
+
+    <!-- Challenge 2 -->
+    <div class="challenge-card medium" id="chal-2">
+      <span class="difficulty-tag medium">◆ Medium</span>
+      <div class="challenge-title">Two Sum Problem</div>
+      <div class="challenge-desc">Given a list of integers and a target, find two indices whose values add up to the target. Return <code>[i, j]</code>. Input: <code>lst = [2, 7, 11, 15], target = 9</code> → Output: <code>[0, 1]</code></div>
+      <textarea class="code-editor" id="editor-2" spellcheck="false">def two_sum(lst, target):
+    # Your code here — try using a dict for O(n)!
+    pass
+
+# Test:
+print(two_sum([2, 7, 11, 15], 9))
+print(two_sum([3, 2, 4], 6))</textarea>
+      <div class="challenge-footer">
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-accent" onclick="checkChallenge(2)">▶ Run</button>
+          <button class="btn btn-ghost" onclick="toggleHint(2)">? Hint</button>
+        </div>
+        <div class="hint-text" id="hint-2">💡 Store each value in a dict as you iterate. For each element, check if (target - element) is already in your dict.</div>
+      </div>
+      <div class="output-log" id="result-2" style="margin-top:12px;display:none"></div>
+    </div>
+
+    <!-- Challenge 3 -->
+    <div class="challenge-card hard" id="chal-3">
+      <span class="difficulty-tag hard">▲ Hard</span>
+      <div class="challenge-title">Rotate Array</div>
+      <div class="challenge-desc">Rotate a list to the right by <code>k</code> steps in-place with O(1) extra space. Input: <code>lst = [1,2,3,4,5,6,7], k = 3</code> → Output: <code>[5,6,7,1,2,3,4]</code></div>
+      <textarea class="code-editor" id="editor-3" spellcheck="false">def rotate(lst, k):
+    # Tip: Use the reverse trick — O(n) time, O(1) space
+    pass
+
+# Test:
+arr = [1, 2, 3, 4, 5, 6, 7]
+rotate(arr, 3)
+print(arr)  # Expected: [5, 6, 7, 1, 2, 3, 4]</textarea>
+      <div class="challenge-footer">
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-accent" onclick="checkChallenge(3)">▶ Run</button>
+          <button class="btn btn-ghost" onclick="toggleHint(3)">? Hint</button>
+        </div>
+        <div class="hint-text" id="hint-3">💡 Reverse trick: (1) reverse entire list, (2) reverse first k elements, (3) reverse remaining. Use list slicing to reverse in-place.</div>
+      </div>
+      <div class="output-log" id="result-3" style="margin-top:12px;display:none"></div>
+    </div>
+  </div>
+
+  <!-- ======== TAB 6: COMPLEXITY ======== -->
+  <div id="tab-complexity" class="tab-panel">
+    <div class="visualizer-grid">
+      <div class="card">
+        <div class="card-title">Python List — Time Complexity</div>
+        <table class="complexity-table">
+          <thead>
+            <tr>
+              <th>Operation</th>
+              <th>Time</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Append</td><td class="o-good">O(1)*</td><td><code style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent)">lst.append(x)</code></td></tr>
+            <tr><td>Pop (end)</td><td class="o-good">O(1)</td><td><code style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent)">lst.pop()</code></td></tr>
+            <tr><td>Pop (middle)</td><td class="o-bad">O(n)</td><td><code style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent)">lst.pop(i)</code></td></tr>
+            <tr><td>Index access</td><td class="o-good">O(1)</td><td><code style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent)">lst[i]</code></td></tr>
+            <tr><td>Insert at i</td><td class="o-bad">O(n)</td><td><code style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent)">lst.insert(i, x)</code></td></tr>
+            <tr><td>Search</td><td class="o-bad">O(n)</td><td><code style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent)">x in lst</code></td></tr>
+            <tr><td>Sort</td><td class="o-ok">O(n log n)</td><td><code style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent)">lst.sort()</code></td></tr>
+            <tr><td>Slice</td><td class="o-ok">O(k)</td><td><code style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent)">lst[i:j]</code></td></tr>
+            <tr><td>Length</td><td class="o-good">O(1)</td><td><code style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent)">len(lst)</code></td></tr>
+            <tr><td>Extend</td><td class="o-ok">O(k)</td><td><code style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent)">lst.extend(lst2)</code></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.72rem;color:var(--muted);margin-top:12px;font-family:'JetBrains Mono',monospace">* amortized O(1) — occasionally triggers O(n) resize</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">List vs. Other Data Structures</div>
+        <table class="complexity-table">
+          <thead>
+            <tr>
+              <th>Structure</th>
+              <th>Access</th>
+              <th>Search</th>
+              <th>Insert</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:var(--accent);font-family:'JetBrains Mono',monospace">list</td>
+              <td class="o-good">O(1)</td>
+              <td class="o-bad">O(n)</td>
+              <td class="o-bad">O(n)</td>
+            </tr>
+            <tr>
+              <td style="color:var(--accent3);font-family:'JetBrains Mono',monospace">dict</td>
+              <td class="o-good">O(1)</td>
+              <td class="o-good">O(1)</td>
+              <td class="o-good">O(1)</td>
+            </tr>
+            <tr>
+              <td style="color:var(--accent2);font-family:'JetBrains Mono',monospace">set</td>
+              <td>N/A</td>
+              <td class="o-good">O(1)</td>
+              <td class="o-good">O(1)</td>
+            </tr>
+            <tr>
+              <td style="color:var(--yellow);font-family:'JetBrains Mono',monospace">deque</td>
+              <td class="o-ok">O(n)</td>
+              <td class="o-bad">O(n)</td>
+              <td class="o-good">O(1)*</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.72rem;color:var(--muted);margin-top:12px;font-family:'JetBrains Mono',monospace">* O(1) at both ends for deque</p>
+
+        <div style="margin-top:18px">
+          <div class="card-title">When to use a list?</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.8;font-family:'JetBrains Mono',monospace">
+            ✅ Ordered, indexed data<br>
+            ✅ Need to slice or reverse<br>
+            ✅ Mostly append/pop from end<br>
+            ❌ Frequent lookups → use dict/set<br>
+            ❌ Queue/deque ops → use collections.deque
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ============ STATE ============
+let myList = [10, 25, 7, 42, 3];
+let opsCount = 0;
+let challengesDone = 0;
+let codeHistory = ['my_list = [10, 25, 7, 42, 3]'];
+
+// ============ TABS ============
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+
+  if (name === 'slicing') initSlice();
+  if (name === 'methods') initMethods();
+  if (name === 'sorting') initSort();
+}
+
+// ============ ARRAY RENDER ============
+function renderArray(arr, highlightIdx = -1, removedIdx = -1, addedIdx = -1) {
+  const el = document.getElementById('main-array');
+  el.innerHTML = '';
+  arr.forEach((val, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'array-slot';
+
+    const cell = document.createElement('div');
+    cell.className = 'array-cell';
+    if (i === highlightIdx) cell.classList.add('highlighted');
+    if (i === removedIdx) cell.classList.add('removed');
+    if (i === addedIdx) cell.classList.add('added');
+    cell.textContent = val;
+
+    const idx = document.createElement('div');
+    idx.className = 'index-label';
+    idx.innerHTML = `${i}<br><span class="neg-index">${i - arr.length}</span>`;
+
+    slot.appendChild(cell);
+    slot.appendChild(idx);
+    el.appendChild(slot);
+  });
+  renderMemory(arr);
+}
+
+function renderMemory(arr) {
+  const el = document.getElementById('memory-model');
+  el.innerHTML = '';
+  arr.forEach((val, i) => {
+    const row = document.createElement('div');
+    row.className = 'memory-row';
+    const base = 0x7f4e;
+    row.innerHTML = `
+      <span class="memory-addr">0x${(base + i * 8).toString(16).toUpperCase()}</span>
+      <span class="memory-val">${val}</span>
+      <span class="memory-ref">lst[${i}] = lst[${i-arr.length}]</span>
+    `;
+    el.appendChild(row);
+  });
+}
+
+function addCodeLine(line) {
+  codeHistory.push(line);
+  if (codeHistory.length > 12) codeHistory.shift();
+  updateCodeDisplay();
+}
+
+function updateCodeDisplay() {
+  // Just show the last action in a clean way
+  const content = document.getElementById('code-content');
+  const lines = codeHistory.map((l, i) => {
+    if (i === codeHistory.length - 1) {
+      return `<span style="color:var(--accent)">${escapeHtml(l)}</span>`;
+    }
+    return `<span style="color:var(--muted)">${escapeHtml(l)}</span>`;
+  });
+  content.innerHTML = lines.join('\n');
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function setOutput(id, msg, type = 'info') {
+  const el = document.getElementById(id);
+  el.className = 'output-log ' + type;
+  el.textContent = msg;
+}
+
+function incOps() {
+  opsCount++;
+  document.getElementById('ops-count').textContent = opsCount;
+}
+
+// ============ LIST OPERATIONS ============
+function doAppend() {
+  const val = document.getElementById('push-val').value.trim();
+  if (!val) { setOutput('main-output', '⚠ Enter a value to append', 'error'); return; }
+  myList.push(isNaN(val) ? val : Number(val));
+  const idx = myList.length - 1;
+  renderArray(myList, -1, -1, idx);
+  addCodeLine(`my_list.append(${isNaN(val) ? '"' + val + '"' : val})  # ${JSON.stringify(myList)}`);
+  setOutput('main-output', `✓ Appended ${val} at index ${idx} — list now has ${myList.length} elements`);
+  document.getElementById('push-val').value = '';
+  incOps();
+}
+
+function doPop() {
+  if (myList.length === 0) { setOutput('main-output', '⚠ Cannot pop from empty list!', 'error'); return; }
+  const removed = myList[myList.length - 1];
+  const removeIdx = myList.length - 1;
+  renderArray(myList, -1, removeIdx);
+  setTimeout(() => {
+    myList.pop();
+    renderArray(myList);
+    addCodeLine(`my_list.pop()  # removed ${removed} → ${JSON.stringify(myList)}`);
+  }, 400);
+  setOutput('main-output', `✓ Popped ${removed} from end of list`);
+  incOps();
+}
+
+function doInsert() {
+  const idx = parseInt(document.getElementById('insert-idx').value);
+  const val = document.getElementById('insert-val').value.trim();
+  if (val === '' || isNaN(idx)) { setOutput('main-output', '⚠ Enter both index and value', 'error'); return; }
+  if (idx < 0 || idx > myList.length) { setOutput('main-output', `⚠ Index must be between 0 and ${myList.length}`, 'error'); return; }
+  myList.splice(idx, 0, isNaN(val) ? val : Number(val));
+  renderArray(myList, -1, -1, idx);
+  addCodeLine(`my_list.insert(${idx}, ${isNaN(val) ? '"' + val + '"' : val})  # ${JSON.stringify(myList)}`);
+  setOutput('main-output', `✓ Inserted ${val} at index ${idx} — elements shifted right`);
+  document.getElementById('insert-idx').value = '';
+  document.getElementById('insert-val').value = '';
+  incOps();
+}
+
+function doRemove() {
+  const val = document.getElementById('remove-val').value.trim();
+  if (!val) { setOutput('main-output', '⚠ Enter a value to remove', 'error'); return; }
+  const numVal = isNaN(val) ? val : Number(val);
+  const idx = myList.indexOf(numVal);
+  if (idx === -1) { setOutput('main-output', `⚠ ValueError: ${val} not in list`, 'error'); return; }
+  renderArray(myList, -1, idx);
+  setTimeout(() => {
+    myList.splice(idx, 1);
+    renderArray(myList);
+    addCodeLine(`my_list.remove(${isNaN(val) ? '"' + val + '"' : val})  # ${JSON.stringify(myList)}`);
+  }, 400);
+  setOutput('main-output', `✓ Removed first occurrence of ${val} at index ${idx}`);
+  document.getElementById('remove-val').value = '';
+  incOps();
+}
+
+function doReverse() {
+  myList.reverse();
+  renderArray(myList);
+  addCodeLine(`my_list.reverse()  # ${JSON.stringify(myList)}`);
+  setOutput('main-output', `✓ Reversed list in-place: ${JSON.stringify(myList)}`);
+  incOps();
+}
+
+function doSort() {
+  myList.sort((a, b) => {
+    if (typeof a === typeof b) return a < b ? -1 : a > b ? 1 : 0;
+    return String(a).localeCompare(String(b));
+  });
+  renderArray(myList);
+  addCodeLine(`my_list.sort()  # ${JSON.stringify(myList)}`);
+  setOutput('main-output', `✓ Sorted list: ${JSON.stringify(myList)}`);
+  incOps();
+}
+
+function doIndex() {
+  const raw = document.getElementById('index-val').value;
+  if (raw === '') return;
+  let idx = parseInt(raw);
+  if (idx < -myList.length || idx >= myList.length) {
+    setOutput('index-output', `⚠ IndexError: index ${idx} out of range (length=${myList.length})`, 'error');
+    renderArray(myList);
+    return;
+  }
+  const pos = idx < 0 ? myList.length + idx : idx;
+  const val = myList[pos];
+  renderArray(myList, pos);
+  setOutput('index-output', `✓ my_list[${idx}] → ${val} (positive index: ${pos})`);
+  incOps();
+}
+
+// ============ SLICING ============
+const sliceData = [10, 25, 7, 42, 3, 16, 8, 99];
+
+function initSlice() {
+  renderSlice();
+  updateSlice();
+}
+
+function renderSlice() {
+  const el = document.getElementById('slice-array');
+  el.innerHTML = '';
+  const start = parseInt(document.getElementById('start-range')?.value || 0);
+  const stop = parseInt(document.getElementById('stop-range')?.value || 5);
+  const step = parseInt(document.getElementById('step-range')?.value || 1);
+
+  const inSlice = new Set();
+  for (let i = start; i < Math.min(stop, sliceData.length); i += step) {
+    inSlice.add(i);
+  }
+
+  sliceData.forEach((val, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'slice-cell' + (inSlice.has(i) ? ' in-slice' : '');
+    cell.textContent = val;
+    el.appendChild(cell);
+  });
+}
+
+function updateSlice() {
+  const startEl = document.getElementById('start-range');
+  const stopEl = document.getElementById('stop-range');
+  const stepEl = document.getElementById('step-range');
+  if (!startEl) return;
+
+  const start = parseInt(startEl.value);
+  const stop = parseInt(stopEl.value);
+  const step = parseInt(stepEl.value);
+
+  document.getElementById('start-val').textContent = start === -1 ? '' : start;
+  document.getElementById('stop-val').textContent = stop === -1 ? '' : stop;
+  document.getElementById('step-val').textContent = step;
+
+  const s = start === -1 ? '' : start;
+  const e = stop >= sliceData.length ? '' : stop;
+  const st = step === 1 ? '' : ':' + step;
+
+  const sliced = [];
+  const effectiveStop = stop >= sliceData.length ? sliceData.length : stop;
+  for (let i = (start === -1 ? 0 : start); i < effectiveStop; i += step) {
+    if (i < sliceData.length) sliced.push(sliceData[i]);
+  }
+
+  document.getElementById('slice-code').innerHTML =
+    `<span class="var">my_list</span> <span class="op">=</span> <span class="bracket">[${sliceData.map(v=>`<span class="num">${v}</span>`).join(', ')}]</span>\n` +
+    `<span class="var">result</span> <span class="op">=</span> <span class="var">my_list</span><span class="bracket">[${s}:${e}${st}]</span>\n` +
+    `<span class="fn">print</span><span class="bracket">(</span><span class="var">result</span><span class="bracket">)</span>`;
+
+  document.getElementById('slice-result').textContent = `→ ${JSON.stringify(sliced)}`;
+  document.getElementById('slice-result').className = 'output-log';
+
+  renderSlice();
+}
+
+function setSlice(start, stop, step) {
+  document.getElementById('start-range').value = start;
+  document.getElementById('stop-range').value = stop;
+  document.getElementById('step-range').value = step;
+  updateSlice();
+}
+
+function setSliceReverse() {
+  // Special case for [::-1] - show concept
+  const el = document.getElementById('slice-array');
+  if (!el) return;
+  el.innerHTML = '';
+  sliceData.slice().reverse().forEach((val) => {
+    const cell = document.createElement('div');
+    cell.className = 'slice-cell in-slice';
+    cell.textContent = val;
+    el.appendChild(cell);
+  });
+  document.getElementById('slice-code').innerHTML =
+    `<span class="var">my_list</span> <span class="op">=</span> <span class="bracket">[${sliceData.map(v=>`<span class="num">${v}</span>`).join(', ')}]</span>\n` +
+    `<span class="var">result</span> <span class="op">=</span> <span class="var">my_list</span><span class="bracket">[::<span class="num">-1</span>]</span>\n` +
+    `<span class="fn">print</span><span class="bracket">(</span><span class="var">result</span><span class="bracket">)</span>`;
+  document.getElementById('slice-result').textContent = `→ ${JSON.stringify(sliceData.slice().reverse())}`;
+}
+
+// ============ METHODS ============
+const methodsData = [
+  { name: 'append()', sig: 'list.append(x)', desc: 'Adds item x to the end of the list.', example: 'lst = [1, 2]\nlst.append(3)\n# [1, 2, 3]' },
+  { name: 'insert()', sig: 'list.insert(i, x)', desc: 'Inserts item x before position i. Shifts elements right.', example: 'lst = [1, 3]\nlst.insert(1, 2)\n# [1, 2, 3]' },
+  { name: 'remove()', sig: 'list.remove(x)', desc: 'Removes first occurrence of x. Raises ValueError if not found.', example: 'lst = [1, 2, 2, 3]\nlst.remove(2)\n# [1, 2, 3]' },
+  { name: 'pop()', sig: 'list.pop([i])', desc: 'Removes and returns item at position i. Default: last item.', example: 'lst = [1, 2, 3]\nval = lst.pop()\n# val=3, lst=[1, 2]' },
+  { name: 'sort()', sig: 'list.sort(key=None, reverse=False)', desc: 'Sorts list in-place using TimSort (O(n log n)). Stable.', example: 'lst = [3, 1, 2]\nlst.sort()\n# [1, 2, 3]' },
+  { name: 'reverse()', sig: 'list.reverse()', desc: 'Reverses list in-place in O(n) time.', example: 'lst = [1, 2, 3]\nlst.reverse()\n# [3, 2, 1]' },
+  { name: 'index()', sig: 'list.index(x[, start[, end]])', desc: 'Returns index of first occurrence of x. Raises ValueError if not found.', example: 'lst = [10, 20, 30]\ni = lst.index(20)\n# i = 1' },
+  { name: 'count()', sig: 'list.count(x)', desc: 'Returns number of times x appears in the list. O(n).', example: 'lst = [1, 2, 2, 3, 2]\nn = lst.count(2)\n# n = 3' },
+  { name: 'extend()', sig: 'list.extend(iterable)', desc: 'Appends all items from iterable to list end. More efficient than += for large data.', example: 'a = [1, 2]\nb = [3, 4]\na.extend(b)\n# a = [1, 2, 3, 4]' },
+  { name: 'copy()', sig: 'list.copy()', desc: 'Returns a shallow copy. Nested objects still reference the original.', example: 'a = [1, 2, 3]\nb = a.copy()\nb.append(4)\n# a=[1,2,3], b=[1,2,3,4]' },
+  { name: 'clear()', sig: 'list.clear()', desc: 'Removes all items from the list. Equivalent to del lst[:].', example: 'lst = [1, 2, 3]\nlst.clear()\n# []' },
+  { name: 'list comp', sig: '[expr for x in iterable if cond]', desc: 'Powerful one-line way to create filtered/transformed lists.', example: 'nums = [1,2,3,4,5]\nevens = [x*2 for x in nums\n        if x % 2 == 0]\n# [4, 8]' },
+];
+
+function initMethods() {
+  const grid = document.getElementById('methods-grid');
+  if (grid.children.length > 0) return;
+  methodsData.forEach((m, i) => {
+    const card = document.createElement('div');
+    card.className = 'method-card';
+    card.innerHTML = `
+      <div class="method-name">${m.name}</div>
+      <div class="method-sig">${escapeHtml(m.sig)}</div>
+      <div class="method-desc">${m.desc}</div>
+      <div class="method-example"><pre>${escapeHtml(m.example)}</pre></div>
+    `;
+    card.onclick = () => card.classList.toggle('expanded');
+    grid.appendChild(card);
+  });
+}
+
+// ============ SORTING ============
+let sortArr = [];
+let sortRunning = false;
+
+function initSort() {
+  resetSort();
+}
+
+function resetSort() {
+  sortRunning = false;
+  sortArr = Array.from({length: 12}, () => Math.floor(Math.random() * 90) + 10);
+  renderBars(sortArr, [], [], []);
+  setOutput('sort-output', 'Array randomized — select an algorithm and click Visualize!', 'info');
+}
+
+function renderBars(arr, comparing = [], swapping = [], sorted = []) {
+  const container = document.getElementById('bars-container');
+  container.innerHTML = '';
+  const max = Math.max(...arr);
+  arr.forEach((val, i) => {
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    if (sorted.includes(i)) bar.classList.add('sorted');
+    else if (swapping.includes(i)) bar.classList.add('swapping');
+    else if (comparing.includes(i)) bar.classList.add('comparing');
+    bar.style.height = `${(val / max) * 140}px`;
+    const label = document.createElement('span');
+    label.className = 'bar-val';
+    label.textContent = val;
+    bar.appendChild(label);
+    container.appendChild(bar);
+  });
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+async function startSort() {
+  if (sortRunning) return;
+  sortRunning = true;
+  const algo = document.getElementById('sort-algo').value;
+  const speedEl = document.getElementById('sort-speed');
+  const getDelay = () => 850 - parseInt(speedEl.value);
+  const arr = [...sortArr];
+  const n = arr.length;
+  const sortedSet = new Set();
+
+  if (algo === 'bubble') {
+    setOutput('sort-output', '⟳ Running Bubble Sort...', 'info');
+    for (let i = 0; i < n - 1; i++) {
+      for (let j = 0; j < n - i - 1; j++) {
+        if (!sortRunning) return;
+        renderBars(arr, [j, j+1], [], [...sortedSet]);
+        await sleep(getDelay());
+        if (arr[j] > arr[j+1]) {
+          renderBars(arr, [], [j, j+1], [...sortedSet]);
+          await sleep(getDelay());
+          [arr[j], arr[j+1]] = [arr[j+1], arr[j]];
+        }
+      }
+      sortedSet.add(n - 1 - i);
+    }
+  } else if (algo === 'selection') {
+    setOutput('sort-output', '⟳ Running Selection Sort...', 'info');
+    for (let i = 0; i < n - 1; i++) {
+      let minIdx = i;
+      for (let j = i + 1; j < n; j++) {
+        if (!sortRunning) return;
+        renderBars(arr, [minIdx, j], [], [...sortedSet]);
+        await sleep(getDelay());
+        if (arr[j] < arr[minIdx]) minIdx = j;
+      }
+      if (minIdx !== i) {
+        renderBars(arr, [], [i, minIdx], [...sortedSet]);
+        await sleep(getDelay());
+        [arr[i], arr[minIdx]] = [arr[minIdx], arr[i]];
+      }
+      sortedSet.add(i);
+    }
+  } else if (algo === 'insertion') {
+    setOutput('sort-output', '⟳ Running Insertion Sort...', 'info');
+    sortedSet.add(0);
+    for (let i = 1; i < n; i++) {
+      let key = arr[i];
+      let j = i - 1;
+      while (j >= 0 && arr[j] > key) {
+        if (!sortRunning) return;
+        renderBars(arr, [j, j+1], [], [...sortedSet]);
+        await sleep(getDelay());
+        arr[j+1] = arr[j];
+        j--;
+      }
+      arr[j+1] = key;
+      sortedSet.add(i);
+    }
+  }
+
+  sortedSet.clear();
+  for (let i = 0; i < n; i++) sortedSet.add(i);
+  renderBars(arr, [], [], [...sortedSet]);
+  sortArr = arr;
+  sortRunning = false;
+  setOutput('sort-output', `✓ Sorting complete! Final: ${JSON.stringify(arr)}`, '');
+}
+
+// ============ CHALLENGES ============
+const challengeSolutions = {
+  1: (code) => {
+    try {
+      const fn = new Function(`
+        ${code}
+        return find_max([3, 1, 4, 1, 5, 9, 2, 6]);
+      `);
+      const result = fn();
+      if (result === 9) return { pass: true, msg: `✓ Correct! Output: ${result}` };
+      return { pass: false, msg: `✗ Got ${result}, expected 9` };
+    } catch(e) { return { pass: false, msg: `✗ Error: ${e.message}` }; }
+  },
+  2: (code) => {
+    try {
+      const fn = new Function(`
+        ${code}
+        const r1 = JSON.stringify(two_sum([2, 7, 11, 15], 9));
+        const r2 = JSON.stringify(two_sum([3, 2, 4], 6));
+        return { r1, r2 };
+      `);
+      const { r1, r2 } = fn();
+      const ok1 = r1 === '[0,1]';
+      const ok2 = r2 === '[1,2]';
+      if (ok1 && ok2) return { pass: true, msg: `✓ Correct! [2,7]→[0,1], [3,2,4]→[1,2]` };
+      return { pass: false, msg: `✗ Got ${r1} and ${r2}. Expected [0,1] and [1,2]` };
+    } catch(e) { return { pass: false, msg: `✗ Error: ${e.message}` }; }
+  },
+  3: (code) => {
+    try {
+      const fn = new Function(`
+        ${code}
+        let arr = [1, 2, 3, 4, 5, 6, 7];
+        rotate(arr, 3);
+        return JSON.stringify(arr);
+      `);
+      const result = fn();
+      if (result === '[5,6,7,1,2,3,4]') return { pass: true, msg: `✓ Correct! Output: ${result}` };
+      return { pass: false, msg: `✗ Got ${result}, expected [5,6,7,1,2,3,4]` };
+    } catch(e) { return { pass: false, msg: `✗ Error: ${e.message}` }; }
+  }
+};
+
+function checkChallenge(id) {
+  const code = document.getElementById(`editor-${id}`).value;
+  const jsCode = pythonToJs(code);
+  const { pass, msg } = challengeSolutions[id](jsCode);
+
+  const resultEl = document.getElementById(`result-${id}`);
+  resultEl.style.display = 'block';
+  resultEl.className = `output-log ${pass ? '' : 'error'}`;
+  resultEl.textContent = msg;
+
+  if (pass) {
+    document.getElementById(`chal-${id}`).style.boxShadow = '0 0 0 2px var(--green)';
+    const done = document.querySelectorAll('.output-log:not(.error):not(.info)[style*="display: block"]').length;
+    document.getElementById('challenges-done').textContent = `${done}/3`;
+  }
+}
+
+function toggleHint(id) {
+  const el = document.getElementById(`hint-${id}`);
+  el.classList.toggle('show');
+}
+
+// Simple Python→JS translator for challenges
+function pythonToJs(code) {
+  return code
+    .replace(/def (\w+)\(([^)]*)\):/g, 'function $1($2) {')
+    .replace(/^\s+pass\s*$/gm, '    return null;')
+    .replace(/^\s*#.*$/gm, '') // strip comments
+    .replace(/(\s+)return None/g, '$1return null')
+    .replace(/(\s+)True/g, '$1true')
+    .replace(/(\s+)False/g, '$1false')
+    .replace(/print\(([^)]*)\)/g, 'console.log($1)')
+    .replace(/range\((\d+),\s*(\d+)\)/g, (_, a, b) => `Array.from({length:${b-a}},(_,i)=>i+${a})`)
+    .replace(/range\((\d+)\)/g, (_, n) => `Array.from({length:${n}},(_,i)=>i)`)
+    .replace(/elif /g, 'else if ')
+    .replace(/\blen\((\w+)\)/g, '$1.length')
+    .replace(/(\w+)\.append\(([^)]+)\)/g, '$1.push($2)')
+    .replace(/for (\w+) in (\w+):/g, 'for (let $1 of $2) {')
+    .replace(/for (\w+) in range\((\w+)\.length\):/g, 'for (let $1 = 0; $1 < $2.length; $1++) {')
+    .replace(/while (.+):/g, 'while ($1) {')
+    .replace(/if (.+):/g, 'if ($1) {')
+    .replace(/else:/g, 'else {')
+    .replace(/\bnot in\b/g, '!in_arr')
+    .replace(/\bin\b/g, 'in_arr')
+    .replace(/__BLOCK_END__/g, '}')
+    + addClosingBraces(code);
+}
+
+function addClosingBraces(code) {
+  let result = '';
+  const lines = code.split('\n');
+  let prevIndent = 0;
+  lines.forEach(line => {
+    const indent = line.search(/\S/);
+    if (indent < prevIndent && indent >= 0) result += '}';
+    prevIndent = indent >= 0 ? indent : prevIndent;
+  });
+  return result + '}}';
+}
+
+// ============ INIT ============
+renderArray(myList);
+initSort();
+updateCodeDisplay();
+</script>
+</body>
+</html>
